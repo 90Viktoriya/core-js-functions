@@ -145,8 +145,21 @@ function memoize(func) {
  * }, 2);
  * retryer() => 2
  */
-function retry(/* func, attempts */) {
-  throw new Error('Not implemented');
+function retry(func, attempts) {
+  let count = 0;
+  let failed = true;
+  return function result() {
+    let res;
+    while (count <= attempts && failed) {
+      try {
+        res = func.call(null);
+        failed = false;
+      } catch {
+        count += 1;
+      }
+    }
+    return res;
+  };
 }
 
 /**
@@ -172,8 +185,20 @@ function retry(/* func, attempts */) {
  * cos(3.141592653589793) ends
  *
  */
-function logger(/* func, logFunc */) {
-  throw new Error('Not implemented');
+function logger(func, logFunc) {
+  return function result(...rest) {
+    let res = '';
+    let args = '';
+    rest.forEach((el, index) => {
+      args += JSON.stringify(el);
+      if (index < rest.length - 1) args += ',';
+    });
+    res += `${func.name}(${args}) `;
+    logFunc.call(null, `${res}starts`);
+    const funcResult = func.call(null, ...rest);
+    logFunc.call(null, `${res}ends`);
+    return funcResult;
+  };
 }
 
 /**
